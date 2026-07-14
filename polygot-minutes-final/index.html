@@ -1,0 +1,336 @@
+
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Polyglot Minutes - Meeting Summarizer</title>
+    <style>
+        :root {
+            --gray1: #434358;
+            --gray2: #484967;
+            --gray3: #575b7d;
+            --gray4: #656887;
+            --gray5: #75789b;
+            --text-main: #edeef2;
+            --text-dark: #434358;
+        }
+        body {
+            background: var(--gray5);
+            margin: 0;
+            font-family: 'Inter', system-ui, Arial, sans-serif;
+            color: var(--text-main);
+            min-height: 100vh;
+        }
+        .container {
+            max-width: 1100px;
+            margin: 0 auto;
+            padding: 40px 12px 60px 12px;
+        }
+        .header {
+            text-align: center;
+            margin-bottom: 40px;
+        }
+        .header h1 {
+            color: var(--text-dark);
+            font-size: 3rem;
+            font-weight: 800;
+            margin-bottom: 10px;
+        }
+        .header p {
+            color: var(--gray3);
+            font-size: 1.18rem;
+        }
+        .upload-section {
+            background: var(--gray2);
+            border-radius: 28px;
+            padding: 44px 0 40px 0;
+            margin-bottom: 38px;
+        }
+        .upload-area {
+            border: 3px dashed var(--gray4);
+            border-radius: 18px;
+            padding: 50px 0 40px 0;
+            text-align: center;
+            background: var(--gray3);
+            color: var(--text-main);
+            font-size: 1.35rem;
+            transition: border 0.2s, background 0.2s;
+            margin: 0 48px;
+            cursor: pointer;
+        }
+        .upload-area.dragover {
+            border-color: var(--gray5);
+            background: var(--gray4);
+        }
+        .upload-icon {
+            font-size: 4rem;
+            margin-bottom: 18px;
+            color: var(--gray5);
+        }
+        .file-input { display: none; }
+        .file-info {
+            margin-top: 20px;
+            color: var(--gray5);
+            background: var(--gray4);
+            border-radius: 12px;
+            padding: 13px 20px;
+            font-weight: 700;
+            width: fit-content;
+            margin-left: auto;
+            margin-right: auto;
+        }
+        .actions-row {
+            margin-top: 34px;
+            display: flex;
+            justify-content: center;
+            gap: 30px;
+        }
+        .big-btn {
+            background: var(--gray1);
+            color: var(--text-main);
+            padding: 20px 40px;
+            font-size: 1.2rem;
+            border-radius: 18px;
+            border: none;
+            font-weight: 700;
+            margin-top: 0;
+            transition: background 0.18s, color 0.18s;
+            cursor: pointer;
+            letter-spacing: 0.01em;
+        }
+        .big-btn:disabled {
+            background: var(--gray3);
+            color: var(--gray5);
+            opacity: .6;
+            cursor: not-allowed;
+        }
+        .loading {
+            text-align: center;
+            margin: 32px 0 0 0;
+        }
+        .spinner {
+            border: 6px solid var(--gray4);
+            border-top: 6px solid var(--gray5);
+            border-radius: 50%;
+            width: 54px;
+            height: 54px;
+            animation: spin 1s linear infinite;
+            display: block;
+            margin: 0 auto 12px auto;
+        }
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+        .error {
+            background: #9e1b3299;
+            color: #fff;
+            padding: 15px;
+            border-radius: 12px;
+            margin-top: 22px;
+            max-width: 500px;
+            margin-left: auto;
+            margin-right: auto;
+            text-align: center;
+            font-weight: 700;
+        }
+        .results {
+            display: flex;
+            flex-direction: column;
+            gap: 38px;
+            margin-top: 44px;
+        }
+        .result-card {
+            background: linear-gradient(180deg,var(--gray3) 70%,var(--gray1));
+            border-radius: 24px;
+            box-shadow: none;
+            padding: 48px 44px;
+            min-height: 260px;
+            color: var(--text-main);
+            font-size: 1.2rem;
+            letter-spacing: 0.01em;
+            display: flex;
+            flex-direction: column;
+            gap: 15px;
+        }
+        .result-card h2 {
+            font-size: 2rem;
+            font-weight: 900;
+            margin-bottom: 8px;
+            color: var(--gray5);
+            display: flex;
+            align-items: center;
+            gap: 12px;
+        }
+        .result-content {
+            background: var(--gray2);
+            padding: 26px 18px 20px 18px;
+            border-radius: 18px;
+            word-break: break-word;
+            overflow-y: auto;
+            font-size: 1.14rem;
+            line-height: 1.64;
+            color: var(--text-main);
+        }
+        ul.actions-list {
+            list-style: disc inside;
+            padding-left: 0;
+        }
+        .action-item {
+            background: var(--gray4);
+            margin-bottom: 16px;
+            border-radius: 12px;
+            padding: 18px 18px 16px 18px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+        .priority-badge {
+            border-radius: 13px;
+            padding: 7px 21px;
+            font-size: 1.08rem;
+            font-weight: 600;
+            background: var(--gray5);
+            color: var(--gray1);
+        }
+        .hidden {display: none;}
+        @media (max-width: 800px) {
+            .container {padding: 12px 2vw 64px 2vw;}
+            .result-card {padding: 22px 6vw;}
+            .upload-section {padding: 24px 0 22px 0;}
+            .upload-area {margin:0 8px;}
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <h1>Polyglot Minutes</h1>
+            <p>AI-Powered Meeting Transcription, Action, and Summary<br/>Modern Gray Edition</p>
+        </div>
+        <div class="upload-section">
+            <div class="upload-area" id="uploadArea">
+                <div class="upload-icon">📁</div>
+                <div>Drop your audio file or click to select</div>
+                <input type="file" id="fileInput" class="file-input" accept="audio/*">
+            </div>
+            <div class="file-info" id="fileInfo"></div>
+            <div class="actions-row">
+                <button class="big-btn" id="submitBtn" disabled>🚀 Process Meeting</button>
+                <button class="big-btn" id="downloadBtn" disabled>⬇️ Download Notes</button>
+            </div>
+            <div class="loading hidden" id="loading">
+                <div class="spinner"></div>
+                <span>Working on your audio...</span>
+            </div>
+            <div class="error hidden" id="error"></div>
+        </div>
+        <div class="results" id="results"></div>
+    </div>
+    <script>
+        const uploadArea = document.getElementById('uploadArea');
+        const fileInput = document.getElementById('fileInput');
+        const submitBtn = document.getElementById('submitBtn');
+        const downloadBtn = document.getElementById('downloadBtn');
+        const loading = document.getElementById('loading');
+        const error = document.getElementById('error');
+        const fileInfo = document.getElementById('fileInfo');
+        const results = document.getElementById('results');
+        let selectedFile = null;
+
+        uploadArea.addEventListener('click', () => fileInput.click());
+        fileInput.addEventListener('change', (e) => handleFile(e.target.files[0]));
+        uploadArea.addEventListener('dragover', (e) => {
+            e.preventDefault(); uploadArea.classList.add('dragover');
+        });
+        uploadArea.addEventListener('dragleave', () => uploadArea.classList.remove('dragover'));
+        uploadArea.addEventListener('drop', (e) => {
+            e.preventDefault(); uploadArea.classList.remove('dragover'); handleFile(e.dataTransfer.files[0]);
+        });
+
+        function handleFile(file) {
+            if (!file) return;
+            if (!file.type.startsWith('audio/')) { showError('Please select an audio file'); return; }
+            selectedFile = file;
+            submitBtn.disabled = false;
+            downloadBtn.disabled = false;
+            fileInfo.textContent = `Selected: ${file.name} (${(file.size / 1024 / 1024).toFixed(2)} MB)`;
+            fileInfo.classList.remove('hidden');
+            error.classList.add('hidden');
+        }
+        function showError(message) {
+            error.textContent = message;
+            error.classList.remove('hidden');
+        }
+        submitBtn.addEventListener('click', async () => {
+            if (!selectedFile) return;
+            loading.classList.remove('hidden'); submitBtn.disabled = true; error.classList.add('hidden'); results.innerHTML = '';
+            const formData = new FormData(); formData.append('file', selectedFile);
+            try {
+                const response = await fetch('http://localhost:8001/notes', {method: 'POST', body: formData});
+                if (!response.ok) throw new Error(`Server error: ${response.status}`);
+                const data = await response.json(); displayResults(data);
+            } catch (err) {
+                showError(`Error processing file: ${err.message}. Make sure the API server is running at http://localhost:8001`);
+            } finally { loading.classList.add('hidden'); submitBtn.disabled = false; }
+        });
+
+        downloadBtn.addEventListener('click', async () => {
+            if (!selectedFile) return;
+            loading.classList.remove('hidden');
+            downloadBtn.disabled = true;
+            error.classList.add('hidden');
+            try {
+                const formData = new FormData();
+                formData.append('file', selectedFile);
+                const resp = await fetch('http://localhost:8001/download-notes', {
+                    method: 'POST', body: formData,
+                });
+                if (!resp.ok) throw new Error('Server error: ' + resp.status);
+                const blob = await resp.blob();
+                const a = document.createElement('a');
+                a.href = window.URL.createObjectURL(blob);
+                a.download = 'meeting-notes.txt';
+                document.body.appendChild(a); a.click(); document.body.removeChild(a);
+            } catch (e) { showError('Error downloading notes: ' + e.message); }
+            finally { loading.classList.add('hidden'); downloadBtn.disabled = false; }
+        });
+
+        function displayResults(data) {
+            const priorityColors = { 'High': 'priority-badge', 'Medium': 'priority-badge', 'Low': 'priority-badge' };
+            results.innerHTML = `
+                <div class="result-card">
+                    <h2>📝 Transcript</h2>
+                    <div class="result-content">${escapeHtml(data.transcript || 'No transcript available')}</div>
+                </div>
+                <div class="result-card">
+                    <h2>✅ Action Items</h2>
+                    <ul class="actions-list">
+                        ${data.actions.map(action => `
+                            <li class="action-item">
+                                <span>${escapeHtml(action.item)}</span>
+                                <span class="${priorityColors[action.priority]}">
+                                    ${escapeHtml(action.priority)}
+                                </span>
+                            </li>
+                        `).join('')}
+                    </ul>
+                </div>
+                <div class="result-card">
+                    <h2>📋 Summary</h2>
+                    <div class="result-content">
+                        ${data.summary_short ? `
+                            <ul>
+                                ${data.summary_short.map(point => `<li>${escapeHtml(point)}</li>`).join('')}
+                            </ul>
+                            <div style="margin-top: 18px; color:var(--text-main)">${escapeHtml(data.summary_detailed)}</div>
+                        ` : '<p>Detailed summary will be available soon</p>'}
+                    </div>
+                </div>
+            `;
+        }
+        function escapeHtml(text) { const div = document.createElement('div'); div.textContent = text; return div.innerHTML; }
+    </script>
+</body>
+</html>
